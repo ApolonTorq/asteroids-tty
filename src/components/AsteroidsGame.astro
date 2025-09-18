@@ -156,36 +156,49 @@ const componentId = `asteroids-game-${Math.random().toString(36).substring(2, 11
   }
 </style>
 
-<script define:vars={{
-  screenSize,
-  displayConfig,
-  physicsMode,
-  difficulty,
-  autoStart,
-  componentId,
-  onGameOver: !!onGameOver,
-  onLevelComplete: !!onLevelComplete,
-  onScoreChange: !!onScoreChange
-}}>
+<script type="module">
+  // Configuration passed from Astro props
+  const gameContainer = document.querySelector('.asteroids-game-container');
+  const config = {
+    screenSize: {width: ${width}, height: ${height}},
+    displayConfig: ${JSON.stringify(displayConfig)},
+    physicsMode: "${physicsMode}",
+    difficulty: "${difficulty}",
+    autoStart: ${autoStart},
+    componentId: gameContainer?.id || 'asteroids-game-default'
+  };
+
   // Dynamic imports for game engine components
   async function loadGameModules() {
-    const [
-      { GameLoop },
-      { PhysicsEngine },
-      { CollisionSystem },
-      { Renderer },
-      { GameStateManager },
-      { InputHandler }
-    ] = await Promise.all([
-      import('../lib/engine/game-loop.js'),
-      import('../lib/engine/physics.js'),
-      import('../lib/engine/collision.js'),
-      import('../lib/engine/renderer.js'),
-      import('../lib/engine/game-state.js'),
-      import('../lib/engine/input.js')
-    ]);
+    try {
+      const [
+        gameLoopModule,
+        physicsModule,
+        collisionModule,
+        rendererModule,
+        gameStateModule,
+        inputModule
+      ] = await Promise.all([
+        import('../lib/engine/game-loop.js'),
+        import('../lib/engine/physics.js'),
+        import('../lib/engine/collision.js'),
+        import('../lib/engine/renderer.js'),
+        import('../lib/engine/game-state.js'),
+        import('../lib/engine/input.js')
+      ]);
 
-    return { GameLoop, PhysicsEngine, CollisionSystem, Renderer, GameStateManager, InputHandler };
+      return {
+        GameLoop: gameLoopModule.GameLoop,
+        PhysicsEngine: physicsModule.PhysicsEngine,
+        CollisionSystem: collisionModule.CollisionSystem,
+        Renderer: rendererModule.Renderer,
+        GameStateManager: gameStateModule.GameStateManager,
+        InputHandler: inputModule.InputHandler
+      };
+    } catch (error) {
+      console.error('Failed to load game modules:', error);
+      throw new Error(`Module loading failed: ${error.message}`);
+    }
   }
 
   // Game instance variables
@@ -197,7 +210,7 @@ const componentId = `asteroids-game-${Math.random().toString(36).substring(2, 11
   async function initializeGame() {
     if (gameInitialized) return;
 
-    gameContainer = document.getElementById(componentId);
+    gameContainer = document.getElementById(config.componentId);
     if (!gameContainer) {
       console.error('Game container not found');
       return;
@@ -208,18 +221,18 @@ const componentId = `asteroids-game-${Math.random().toString(36).substring(2, 11
       const { GameLoop, PhysicsEngine, CollisionSystem, Renderer, GameStateManager, InputHandler } = await loadGameModules();
 
       // Create game systems
-      const physics = new PhysicsEngine(screenSize.width, screenSize.height);
-      physics.setGameMode(physicsMode);
+      const physics = new PhysicsEngine(config.screenSize.width, config.screenSize.height);
+      physics.setGameMode(config.physicsMode);
 
-      const collision = new CollisionSystem(screenSize.width, screenSize.height);
+      const collision = new CollisionSystem(config.screenSize.width, config.screenSize.height);
 
-      const renderer = new Renderer(screenSize.width, screenSize.height, displayConfig);
+      const renderer = new Renderer(config.screenSize.width, config.screenSize.height, config.displayConfig);
 
       const gameState = new GameStateManager({
-        screenSize,
-        gameMode: physicsMode,
-        characterMode: displayConfig.characterMode,
-        difficulty
+        screenSize: config.screenSize,
+        gameMode: config.physicsMode,
+        characterMode: config.displayConfig.characterMode,
+        difficulty: config.difficulty
       });
 
       const input = new InputHandler(gameContainer);
@@ -309,7 +322,7 @@ const componentId = `asteroids-game-${Math.random().toString(36).substring(2, 11
       gameState.spawnAsteroidsForLevel(1);
 
       // Auto-start if requested
-      if (autoStart) {
+      if (config.autoStart) {
         gameLoop.start();
       }
 
@@ -321,7 +334,7 @@ const componentId = `asteroids-game-${Math.random().toString(36).substring(2, 11
       // Expose game loop for external control
       if (typeof window !== 'undefined') {
         window.astroGameInstances = window.astroGameInstances || {};
-        window.astroGameInstances[componentId] = gameLoop;
+        window.astroGameInstances[config.componentId] = gameLoop;
       }
 
     } catch (error) {
@@ -359,7 +372,7 @@ const componentId = `asteroids-game-${Math.random().toString(36).substring(2, 11
     }
 
     if (typeof window !== 'undefined' && window.astroGameInstances) {
-      delete window.astroGameInstances[componentId];
+      delete window.astroGameInstances[config.componentId];
     }
 
     gameInitialized = false;
@@ -381,7 +394,7 @@ const componentId = `asteroids-game-${Math.random().toString(36).substring(2, 11
   // Public API for external control
   if (typeof window !== 'undefined') {
     window.AsteroidsGame = window.AsteroidsGame || {};
-    window.AsteroidsGame[componentId] = {
+    window.AsteroidsGame[config.componentId] = {
       start: () => gameLoop?.start(),
       stop: () => gameLoop?.stop(),
       pause: () => gameLoop?.pause(),
