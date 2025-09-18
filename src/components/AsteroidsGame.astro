@@ -226,6 +226,7 @@ const componentId = `asteroids-game-${Math.random().toString(36).substring(2, 11
 
       // Create game loop with callbacks
       const callbacks = {};
+      let hudElement = null; // Will be set after HUD creation
 
       // Set up callbacks if provided by props
       if (onGameOver && typeof window !== 'undefined' && window.astroGameCallbacks?.[componentId]?.onGameOver) {
@@ -239,6 +240,27 @@ const componentId = `asteroids-game-${Math.random().toString(36).substring(2, 11
       if (onScoreChange && typeof window !== 'undefined' && window.astroGameCallbacks?.[componentId]?.onScoreChange) {
         callbacks.onScoreChange = window.astroGameCallbacks[componentId].onScoreChange;
       }
+
+      // Add HUD update callback
+      callbacks.onUpdate = (frameData) => {
+        if (hudElement) {
+          const currentState = gameState.getState();
+          const newHUD = renderer.renderHUD({
+            score: currentState.score,
+            level: currentState.level,
+            lives: currentState.lives,
+            gameStatus: currentState.gameStatus,
+            fps: Math.round(frameData.fps)
+          });
+
+          // Replace existing HUD
+          const gameWrapper = hudElement.parentElement;
+          if (gameWrapper) {
+            gameWrapper.replaceChild(newHUD, hudElement);
+            hudElement = newHUD;
+          }
+        }
+      };
 
       gameLoop = new GameLoop(
         physics,
@@ -254,16 +276,33 @@ const componentId = `asteroids-game-${Math.random().toString(36).substring(2, 11
         callbacks
       );
 
+      // Create game wrapper with HUD
+      const gameWrapper = document.createElement('div');
+      gameWrapper.className = 'game-wrapper';
+      gameWrapper.style.cssText = 'position: relative; display: inline-block;';
+
       // Create and insert game DOM element
       const gameElement = renderer.createDOMElement();
       gameElement.tabIndex = 0; // Make focusable
 
+      // Create HUD element
+      hudElement = renderer.renderHUD({
+        score: gameState.getScore(),
+        level: gameState.getLevel(),
+        lives: gameState.getLives(),
+        gameStatus: gameState.getGameStatus()
+      });
+
+      // Assemble game wrapper
+      gameWrapper.appendChild(gameElement);
+      gameWrapper.appendChild(hudElement);
+
       // Replace loading message
       const loadingElement = gameContainer.querySelector('.game-loading');
       if (loadingElement) {
-        gameContainer.replaceChild(gameElement, loadingElement);
+        gameContainer.replaceChild(gameWrapper, loadingElement);
       } else {
-        gameContainer.insertBefore(gameElement, gameContainer.firstChild);
+        gameContainer.insertBefore(gameWrapper, gameContainer.firstChild);
       }
 
       // Set up initial level
