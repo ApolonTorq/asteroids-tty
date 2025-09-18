@@ -70,20 +70,20 @@ Single Astro project structure:
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 
 ### TypeScript Interfaces and Types
-- [ ] T021 [P] Position and Velocity interfaces in src/lib/types/geometry.ts
-- [ ] T022 [P] Spaceship interface in src/lib/types/spaceship.ts
-- [ ] T023 [P] Asteroid interface in src/lib/types/asteroid.ts
-- [ ] T024 [P] Projectile interface in src/lib/types/projectile.ts
-- [ ] T025 [P] GameState interface in src/lib/types/game-state.ts
-- [ ] T026 [P] DisplayConfiguration interface in src/lib/types/display.ts
+- [x] T021 [P] Position and Velocity interfaces in src/lib/types/geometry.ts
+- [x] T022 [P] Spaceship interface in src/lib/types/spaceship.ts
+- [x] T023 [P] Asteroid interface in src/lib/types/asteroid.ts
+- [x] T024 [P] Projectile interface in src/lib/types/projectile.ts
+- [x] T025 [P] GameState interface in src/lib/types/game-state.ts
+- [x] T026 [P] DisplayConfiguration interface in src/lib/types/display.ts
 
 ### Game Engine Core
-- [ ] T027 [P] Physics engine for position/velocity updates in src/lib/engine/physics.ts
-- [ ] T028 [P] Collision detection system in src/lib/engine/collision.ts
-- [ ] T029 [P] Input handling system in src/lib/engine/input.ts
-- [ ] T030 [P] Rendering system for character grid in src/lib/engine/renderer.ts
-- [ ] T031 Game state manager in src/lib/engine/game-state.ts
-- [ ] T032 Game loop controller in src/lib/engine/game-loop.ts
+- [x] T027 [P] Physics engine for position/velocity updates in src/lib/engine/physics.ts
+- [x] T028 [P] Collision detection system in src/lib/engine/collision.ts
+- [x] T029 [P] Input handling system in src/lib/engine/input.ts
+- [x] T030 [P] Rendering system for character grid in src/lib/engine/renderer.ts
+- [x] T031 Game state manager in src/lib/engine/game-state.ts
+- [x] T032 Game loop controller in src/lib/engine/game-loop.ts
 
 ### Game Objects
 - [ ] T033 [P] Spaceship class implementation in src/lib/objects/spaceship.ts
