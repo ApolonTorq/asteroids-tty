@@ -1,0 +1,327 @@
+---
+// Demo page with multiple game configurations
+import AsteroidsGame from '../components/AsteroidsGame.astro';
+---
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asteroids TTY - Configuration Demo</title>
+  <meta name="description" content="Try different configurations of the Asteroids TTY game - different screen sizes, character modes, physics modes, and difficulty levels." />
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Monaco, "Lucida Console", "Courier New", monospace;
+      background-color: #000;
+      color: #00FF00;
+      line-height: 1.4;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    h1 {
+      text-align: center;
+      color: #FFFF00;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 10px #FFFF00;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #00FF00;
+      margin-bottom: 2rem;
+      font-size: 1.2rem;
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+
+    .demo-section {
+      background-color: #001100;
+      border: 2px solid #00FF00;
+      border-radius: 8px;
+      padding: 1.5rem;
+    }
+
+    .demo-section h2 {
+      color: #FFFF00;
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+      text-align: center;
+    }
+
+    .demo-section p {
+      margin-bottom: 1rem;
+      text-align: center;
+      color: #AAFFAA;
+    }
+
+    .game-container {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+
+    .nav-links {
+      text-align: center;
+      margin: 2rem 0;
+    }
+
+    .nav-links a {
+      color: #FFFF00;
+      text-decoration: none;
+      margin: 0 1rem;
+      padding: 0.5rem 1rem;
+      border: 1px solid #FFFF00;
+      border-radius: 4px;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      background-color: #FFFF00;
+      color: #000;
+    }
+
+    .controls-info {
+      background-color: #002200;
+      border: 1px solid #00FF00;
+      border-radius: 4px;
+      padding: 1rem;
+      margin: 2rem 0;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .demo-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🎮 CONFIGURATION DEMOS 🎮</h1>
+    <p class="subtitle">Experience different game configurations and modes</p>
+
+    <div class="nav-links">
+      <a href="/">← Back to Main Game</a>
+      <a href="/docs">📖 Documentation</a>
+    </div>
+
+    <div class="controls-info">
+      <p><strong>Universal Controls:</strong> W/↑ Thrust • A/← D/→ Rotate • Space Shoot • P Pause • C Characters • M Physics • R Reset</p>
+    </div>
+
+    <div class="demo-grid">
+      <!-- Classic Configuration -->
+      <section class="demo-section">
+        <h2>🕹️ Classic Mode</h2>
+        <p>80×25 ASCII • Scrolling Physics • Normal Difficulty</p>
+        <p>This is the authentic 1979 Index 2000 experience</p>
+        <div class="game-container">
+          <AsteroidsGame
+            width={80}
+            height={25}
+            characterMode="ascii"
+            physicsMode="scrolling"
+            difficulty="normal"
+            autoStart={false}
+            showControls={false}
+          />
+        </div>
+      </section>
+
+      <!-- Modern Configuration -->
+      <section class="demo-section">
+        <h2>🚀 Modern Mode</h2>
+        <p>60×20 Unicode • Traditional Physics • Normal Difficulty</p>
+        <p>Modern asteroids gameplay with emoji graphics</p>
+        <div class="game-container">
+          <AsteroidsGame
+            width={60}
+            height={20}
+            characterMode="unicode"
+            physicsMode="traditional"
+            difficulty="normal"
+            autoStart={false}
+            showControls={false}
+          />
+        </div>
+      </section>
+
+      <!-- Compact Configuration -->
+      <section class="demo-section">
+        <h2>📱 Compact Mode</h2>
+        <p>40×15 ASCII • Traditional Physics • Easy Difficulty</p>
+        <p>Smaller screen size perfect for mobile devices</p>
+        <div class="game-container">
+          <AsteroidsGame
+            width={40}
+            height={15}
+            characterMode="ascii"
+            physicsMode="traditional"
+            difficulty="easy"
+            autoStart={false}
+            showControls={false}
+          />
+        </div>
+      </section>
+
+      <!-- Challenge Configuration -->
+      <section class="demo-section">
+        <h2>🔥 Challenge Mode</h2>
+        <p>100×30 Unicode • Scrolling Physics • Hard Difficulty</p>
+        <p>Large screen with maximum difficulty for experts</p>
+        <div class="game-container">
+          <AsteroidsGame
+            width={100}
+            height={30}
+            characterMode="unicode"
+            physicsMode="scrolling"
+            difficulty="hard"
+            autoStart={false}
+            showControls={false}
+          />
+        </div>
+      </section>
+
+      <!-- Minimalist Configuration -->
+      <section class="demo-section">
+        <h2>⚡ Minimalist Mode</h2>
+        <p>30×12 ASCII • Traditional Physics • Easy Difficulty</p>
+        <p>Tiny game field for quick sessions</p>
+        <div class="game-container">
+          <AsteroidsGame
+            width={30}
+            height={12}
+            characterMode="ascii"
+            physicsMode="traditional"
+            difficulty="easy"
+            autoStart={false}
+            showControls={false}
+          />
+        </div>
+      </section>
+
+      <!-- Widescreen Configuration -->
+      <section class="demo-section">
+        <h2>🖥️ Widescreen Mode</h2>
+        <p>120×20 Unicode • Traditional Physics • Normal Difficulty</p>
+        <p>Wide aspect ratio for modern monitors</p>
+        <div class="game-container">
+          <AsteroidsGame
+            width={120}
+            height={20}
+            characterMode="unicode"
+            physicsMode="traditional"
+            difficulty="normal"
+            autoStart={false}
+            showControls={false}
+          />
+        </div>
+      </section>
+    </div>
+
+    <!-- Configuration Comparison -->
+    <section class="demo-section" style="grid-column: 1 / -1; margin-top: 2rem;">
+      <h2>📊 Configuration Comparison</h2>
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+          <thead>
+            <tr style="border-bottom: 2px solid #00FF00;">
+              <th style="padding: 0.5rem; text-align: left; color: #FFFF00;">Mode</th>
+              <th style="padding: 0.5rem; text-align: left; color: #FFFF00;">Size</th>
+              <th style="padding: 0.5rem; text-align: left; color: #FFFF00;">Characters</th>
+              <th style="padding: 0.5rem; text-align: left; color: #FFFF00;">Physics</th>
+              <th style="padding: 0.5rem; text-align: left; color: #FFFF00;">Difficulty</th>
+              <th style="padding: 0.5rem; text-align: left; color: #FFFF00;">Best For</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid #004400;">
+              <td style="padding: 0.5rem;">Classic</td>
+              <td style="padding: 0.5rem;">80×25</td>
+              <td style="padding: 0.5rem;">ASCII</td>
+              <td style="padding: 0.5rem;">Scrolling</td>
+              <td style="padding: 0.5rem;">Normal</td>
+              <td style="padding: 0.5rem;">Nostalgia & authenticity</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #004400;">
+              <td style="padding: 0.5rem;">Modern</td>
+              <td style="padding: 0.5rem;">60×20</td>
+              <td style="padding: 0.5rem;">Unicode</td>
+              <td style="padding: 0.5rem;">Traditional</td>
+              <td style="padding: 0.5rem;">Normal</td>
+              <td style="padding: 0.5rem;">Modern gameplay</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #004400;">
+              <td style="padding: 0.5rem;">Compact</td>
+              <td style="padding: 0.5rem;">40×15</td>
+              <td style="padding: 0.5rem;">ASCII</td>
+              <td style="padding: 0.5rem;">Traditional</td>
+              <td style="padding: 0.5rem;">Easy</td>
+              <td style="padding: 0.5rem;">Mobile devices</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #004400;">
+              <td style="padding: 0.5rem;">Challenge</td>
+              <td style="padding: 0.5rem;">100×30</td>
+              <td style="padding: 0.5rem;">Unicode</td>
+              <td style="padding: 0.5rem;">Scrolling</td>
+              <td style="padding: 0.5rem;">Hard</td>
+              <td style="padding: 0.5rem;">Expert players</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #004400;">
+              <td style="padding: 0.5rem;">Minimalist</td>
+              <td style="padding: 0.5rem;">30×12</td>
+              <td style="padding: 0.5rem;">ASCII</td>
+              <td style="padding: 0.5rem;">Traditional</td>
+              <td style="padding: 0.5rem;">Easy</td>
+              <td style="padding: 0.5rem;">Quick sessions</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem;">Widescreen</td>
+              <td style="padding: 0.5rem;">120×20</td>
+              <td style="padding: 0.5rem;">Unicode</td>
+              <td style="padding: 0.5rem;">Traditional</td>
+              <td style="padding: 0.5rem;">Normal</td>
+              <td style="padding: 0.5rem;">Modern displays</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div style="text-align: center; margin: 2rem 0; color: #888;">
+      <p>Each game instance is independent • Try multiple configurations simultaneously</p>
+    </div>
+  </div>
+</body>
+</html>

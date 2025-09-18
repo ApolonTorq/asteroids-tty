@@ -1,0 +1,356 @@
+---
+// AsteroidsGame.astro - Main game component
+import type { ScreenSize, GameMode, Difficulty } from '../lib/types/game-state.js';
+import type { DisplayConfiguration } from '../lib/types/display.js';
+import { CHARACTER_SETS } from '../lib/types/display.js';
+
+// Props interface
+export interface Props {
+  width?: number;
+  height?: number;
+  characterMode?: 'ascii' | 'unicode';
+  physicsMode?: GameMode;
+  difficulty?: Difficulty;
+  autoStart?: boolean;
+  showControls?: boolean;
+  onGameOver?: (score: number) => void;
+  onLevelComplete?: (level: number) => void;
+  onScoreChange?: (score: number) => void;
+}
+
+// Extract props with defaults
+const {
+  width = 80,
+  height = 25,
+  characterMode = 'ascii',
+  physicsMode = 'scrolling',
+  difficulty = 'normal',
+  autoStart = true,
+  showControls = true,
+  onGameOver,
+  onLevelComplete,
+  onScoreChange
+} = Astro.props;
+
+// Validate props
+if (width <= 0 || height <= 0) {
+  throw new Error('Width and height must be positive numbers');
+}
+
+// Create screen size configuration
+const screenSize: ScreenSize = { width, height };
+
+// Create display configuration
+const displayConfig: DisplayConfiguration = {
+  characterMode,
+  characterSet: characterMode === 'ascii' ? CHARACTER_SETS.ascii : CHARACTER_SETS.unicode,
+  colors: {
+    background: '#000000',
+    foreground: '#00FF00',
+    accent: '#FFFF00',
+    highlight: '#FF0000'
+  },
+  screenSize
+};
+
+// Generate unique component ID
+const componentId = `asteroids-game-${Math.random().toString(36).substring(2, 11)}`;
+---
+
+<div class="asteroids-game-container" id={componentId}>
+  <!-- Game canvas will be inserted here by JavaScript -->
+  <div class="game-loading">
+    <p>Loading Asteroids Game...</p>
+    <p>Press any key to continue</p>
+  </div>
+
+  <!-- Controls help (optional) -->
+  {showControls && (
+    <div class="game-controls">
+      <h3>Controls:</h3>
+      <ul>
+        <li><strong>W/↑</strong> - Thrust</li>
+        <li><strong>A/←</strong> - Rotate Left</li>
+        <li><strong>D/→</strong> - Rotate Right</li>
+        <li><strong>Space</strong> - Shoot</li>
+        <li><strong>P/Esc</strong> - Pause</li>
+        <li><strong>R</strong> - Reset (when game over)</li>
+        <li><strong>C</strong> - Toggle Characters (ASCII/Unicode)</li>
+        <li><strong>M</strong> - Toggle Physics (Scrolling/Traditional)</li>
+      </ul>
+    </div>
+  )}
+</div>
+
+<style>
+  .asteroids-game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: #000;
+    color: #00FF00;
+    font-family: Monaco, "Lucida Console", "Courier New", monospace;
+    border: 2px solid #00FF00;
+    border-radius: 4px;
+    position: relative;
+  }
+
+  .game-loading {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.2em;
+  }
+
+  .game-loading p {
+    margin: 0.5rem 0;
+  }
+
+  .game-controls {
+    background-color: #001100;
+    border: 1px solid #00FF00;
+    border-radius: 4px;
+    padding: 1rem;
+    font-size: 0.9em;
+    max-width: 600px;
+  }
+
+  .game-controls h3 {
+    margin: 0 0 0.5rem 0;
+    color: #FFFF00;
+  }
+
+  .game-controls ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.25rem;
+  }
+
+  .game-controls li {
+    margin: 0;
+  }
+
+  .game-controls strong {
+    color: #FFFF00;
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .asteroids-game-container {
+      padding: 0.5rem;
+    }
+
+    .game-controls ul {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Focus management for accessibility */
+  .asteroids-game-container:focus-within {
+    outline: 2px solid #FFFF00;
+    outline-offset: 2px;
+  }
+</style>
+
+<script define:vars={{
+  screenSize,
+  displayConfig,
+  physicsMode,
+  difficulty,
+  autoStart,
+  componentId,
+  onGameOver: !!onGameOver,
+  onLevelComplete: !!onLevelComplete,
+  onScoreChange: !!onScoreChange
+}}>
+  // Dynamic imports for game engine components
+  async function loadGameModules() {
+    const [
+      { GameLoop },
+      { PhysicsEngine },
+      { CollisionSystem },
+      { Renderer },
+      { GameStateManager },
+      { InputHandler }
+    ] = await Promise.all([
+      import('../lib/engine/game-loop.js'),
+      import('../lib/engine/physics.js'),
+      import('../lib/engine/collision.js'),
+      import('../lib/engine/renderer.js'),
+      import('../lib/engine/game-state.js'),
+      import('../lib/engine/input.js')
+    ]);
+
+    return { GameLoop, PhysicsEngine, CollisionSystem, Renderer, GameStateManager, InputHandler };
+  }
+
+  // Game instance variables
+  let gameLoop = null;
+  let gameContainer = null;
+  let gameInitialized = false;
+
+  // Initialize game when DOM is ready
+  async function initializeGame() {
+    if (gameInitialized) return;
+
+    gameContainer = document.getElementById(componentId);
+    if (!gameContainer) {
+      console.error('Game container not found');
+      return;
+    }
+
+    try {
+      // Load game modules
+      const { GameLoop, PhysicsEngine, CollisionSystem, Renderer, GameStateManager, InputHandler } = await loadGameModules();
+
+      // Create game systems
+      const physics = new PhysicsEngine(screenSize.width, screenSize.height);
+      physics.setGameMode(physicsMode);
+
+      const collision = new CollisionSystem(screenSize.width, screenSize.height);
+
+      const renderer = new Renderer(screenSize.width, screenSize.height, displayConfig);
+
+      const gameState = new GameStateManager({
+        screenSize,
+        gameMode: physicsMode,
+        characterMode: displayConfig.characterMode,
+        difficulty
+      });
+
+      const input = new InputHandler(gameContainer);
+
+      // Create game loop with callbacks
+      const callbacks = {};
+
+      // Set up callbacks if provided by props
+      if (onGameOver && typeof window !== 'undefined' && window.astroGameCallbacks?.[componentId]?.onGameOver) {
+        callbacks.onGameOver = window.astroGameCallbacks[componentId].onGameOver;
+      }
+
+      if (onLevelComplete && typeof window !== 'undefined' && window.astroGameCallbacks?.[componentId]?.onLevelComplete) {
+        callbacks.onLevelComplete = window.astroGameCallbacks[componentId].onLevelComplete;
+      }
+
+      if (onScoreChange && typeof window !== 'undefined' && window.astroGameCallbacks?.[componentId]?.onScoreChange) {
+        callbacks.onScoreChange = window.astroGameCallbacks[componentId].onScoreChange;
+      }
+
+      gameLoop = new GameLoop(
+        physics,
+        collision,
+        renderer,
+        gameState,
+        input,
+        {
+          targetFPS: 60,
+          maxDeltaTime: 50,
+          enableDebug: false
+        },
+        callbacks
+      );
+
+      // Create and insert game DOM element
+      const gameElement = renderer.createDOMElement();
+      gameElement.tabIndex = 0; // Make focusable
+
+      // Replace loading message
+      const loadingElement = gameContainer.querySelector('.game-loading');
+      if (loadingElement) {
+        gameContainer.replaceChild(gameElement, loadingElement);
+      } else {
+        gameContainer.insertBefore(gameElement, gameContainer.firstChild);
+      }
+
+      // Set up initial level
+      gameState.spawnAsteroidsForLevel(1);
+
+      // Auto-start if requested
+      if (autoStart) {
+        gameLoop.start();
+      }
+
+      // Focus game element for keyboard input
+      gameElement.focus();
+
+      gameInitialized = true;
+
+      // Expose game loop for external control
+      if (typeof window !== 'undefined') {
+        window.astroGameInstances = window.astroGameInstances || {};
+        window.astroGameInstances[componentId] = gameLoop;
+      }
+
+    } catch (error) {
+      console.error('Failed to initialize Asteroids game:', error);
+
+      // Show error message
+      const errorElement = document.createElement('div');
+      errorElement.className = 'game-error';
+      errorElement.innerHTML = `
+        <p><strong>Error loading game:</strong></p>
+        <p>${error.message}</p>
+        <p>Please check the console for more details.</p>
+      `;
+      errorElement.style.cssText = `
+        color: #FF0000;
+        text-align: center;
+        padding: 2rem;
+        border: 1px solid #FF0000;
+        background-color: #220000;
+        border-radius: 4px;
+      `;
+
+      const loadingElement = gameContainer.querySelector('.game-loading');
+      if (loadingElement) {
+        gameContainer.replaceChild(errorElement, loadingElement);
+      }
+    }
+  }
+
+  // Cleanup function
+  function cleanup() {
+    if (gameLoop) {
+      gameLoop.destroy();
+      gameLoop = null;
+    }
+
+    if (typeof window !== 'undefined' && window.astroGameInstances) {
+      delete window.astroGameInstances[componentId];
+    }
+
+    gameInitialized = false;
+  }
+
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeGame);
+  } else {
+    // DOM already loaded
+    setTimeout(initializeGame, 0);
+  }
+
+  // Cleanup on page unload
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', cleanup);
+  }
+
+  // Public API for external control
+  if (typeof window !== 'undefined') {
+    window.AsteroidsGame = window.AsteroidsGame || {};
+    window.AsteroidsGame[componentId] = {
+      start: () => gameLoop?.start(),
+      stop: () => gameLoop?.stop(),
+      pause: () => gameLoop?.pause(),
+      resume: () => gameLoop?.resume(),
+      reset: () => gameLoop?.reset(),
+      getStats: () => gameLoop?.getPerformanceStats(),
+      getDebugInfo: () => gameLoop?.getDebugInfo(),
+      isRunning: () => gameLoop?.isRunning() || false
+    };
+  }
+</script>

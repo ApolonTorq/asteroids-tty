@@ -1,0 +1,227 @@
+---
+// Main demo page for Asteroids TTY
+import AsteroidsGame from '../components/AsteroidsGame.astro';
+---
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asteroids TTY - Retro Terminal Game</title>
+  <meta name="description" content="A nostalgic recreation of the classic Asteroids game using character-based graphics, built with Astro and TypeScript." />
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Monaco, "Lucida Console", "Courier New", monospace;
+      background-color: #000;
+      color: #00FF00;
+      line-height: 1.4;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      flex: 1;
+    }
+
+    h1 {
+      text-align: center;
+      color: #FFFF00;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 10px #FFFF00;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #00FF00;
+      margin-bottom: 2rem;
+      font-size: 1.2rem;
+    }
+
+    .game-wrapper {
+      display: flex;
+      justify-content: center;
+      margin: 2rem 0;
+    }
+
+    .info-section {
+      background-color: #001100;
+      border: 2px solid #00FF00;
+      border-radius: 8px;
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+
+    .info-section h2 {
+      color: #FFFF00;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+    }
+
+    .info-section p {
+      margin-bottom: 1rem;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .feature-card {
+      background-color: #002200;
+      border: 1px solid #00FF00;
+      border-radius: 4px;
+      padding: 1rem;
+    }
+
+    .feature-card h3 {
+      color: #FFFF00;
+      margin-bottom: 0.5rem;
+    }
+
+    .code-block {
+      background-color: #002200;
+      border: 1px solid #00FF00;
+      border-radius: 4px;
+      padding: 1rem;
+      margin: 1rem 0;
+      overflow-x: auto;
+    }
+
+    .code-block code {
+      color: #00FFFF;
+      font-family: inherit;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      border-top: 1px solid #00FF00;
+      margin-top: 2rem;
+      color: #888;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🚀 ASTEROIDS TTY 🚀</h1>
+    <p class="subtitle">A nostalgic recreation of the 1979 classic with modern web technology</p>
+
+    <!-- Main Game Component -->
+    <div class="game-wrapper">
+      <AsteroidsGame
+        width={80}
+        height={25}
+        characterMode="ascii"
+        physicsMode="scrolling"
+        difficulty="normal"
+        autoStart={true}
+        showControls={true}
+      />
+    </div>
+
+    <!-- About Section -->
+    <section class="info-section">
+      <h2>About This Game</h2>
+      <p>
+        This is a faithful recreation of the classic Asteroids game, designed to emulate the experience
+        of playing on a 1979 Index 2000 computer with an 80×25 character display. Built with modern
+        web technologies (Astro + TypeScript) while maintaining that retro terminal aesthetic.
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h3>🎮 Classic Gameplay</h3>
+          <p>Navigate your spaceship through an asteroid field, shooting asteroids and avoiding collisions.</p>
+        </div>
+
+        <div class="feature-card">
+          <h3>📺 Retro Graphics</h3>
+          <p>Character-based graphics using ASCII or Unicode symbols, just like the original terminals.</p>
+        </div>
+
+        <div class="feature-card">
+          <h3>⚙️ Dual Physics</h3>
+          <p>Choose between "scrolling" mode (Index 2000 style) or "traditional" Asteroids physics.</p>
+        </div>
+
+        <div class="feature-card">
+          <h3>🔧 Configurable</h3>
+          <p>Adjustable screen size, difficulty, character sets, and physics modes.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Technical Details -->
+    <section class="info-section">
+      <h2>Technical Implementation</h2>
+      <p>
+        Built as a reusable Astro component with TypeScript, featuring:
+      </p>
+      <ul style="list-style: none; padding-left: 1rem;">
+        <li>✓ 60 FPS game loop with requestAnimationFrame</li>
+        <li>✓ Collision detection with spatial partitioning</li>
+        <li>✓ State management and save/restore functionality</li>
+        <li>✓ Comprehensive test coverage (TDD approach)</li>
+        <li>✓ Component-first architecture for reusability</li>
+        <li>✓ TypeScript strict mode for type safety</li>
+      </ul>
+
+      <div class="code-block">
+        <code>
+// Usage example:<br>
+&lt;AsteroidsGame <br>
+&nbsp;&nbsp;width={80}<br>
+&nbsp;&nbsp;height={25}<br>
+&nbsp;&nbsp;characterMode="unicode"<br>
+&nbsp;&nbsp;physicsMode="traditional"<br>
+&nbsp;&nbsp;difficulty="hard"<br>
+/&gt;
+        </code>
+      </div>
+    </section>
+
+    <!-- Links -->
+    <section class="info-section">
+      <h2>More Information</h2>
+      <p>
+        <a href="/demo" style="color: #FFFF00; text-decoration: none;">🎯 Try Different Configurations</a><br>
+        <a href="https://github.com/user/asteroids-tty" style="color: #00FFFF; text-decoration: none;">📁 View Source Code</a><br>
+        <a href="/docs" style="color: #FF00FF; text-decoration: none;">📖 Documentation</a>
+      </p>
+    </section>
+  </div>
+
+  <footer>
+    <p>Recreation of a 1979 BASIC game • Built with Astro + TypeScript • 2024</p>
+  </footer>
+</body>
+</html>
