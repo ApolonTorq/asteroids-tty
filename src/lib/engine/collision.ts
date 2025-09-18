@@ -151,7 +151,10 @@ export class CollisionSystem {
 
     if (spaceshipCollisions.length > 0) {
       results.spaceshipHit = true;
-      this.handleSpaceshipAsteroidCollision(gameState.objects.spaceship, spaceshipCollisions[0]);
+      const firstCollision = spaceshipCollisions[0];
+      if (firstCollision) {
+        this.handleSpaceshipAsteroidCollision(gameState.objects.spaceship, firstCollision);
+      }
     }
 
     // Check projectile-asteroid collisions
