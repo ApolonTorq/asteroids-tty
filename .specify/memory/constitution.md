@@ -1,50 +1,52 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Asteroids TTY Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Component-First
+Every game feature starts as a reusable Astro component
+Components must be self-contained and easily extractable to other projects
+Clear separation between game logic and Astro framework integration
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. TypeScript Strictness
+Strong typing required throughout - no `any` types except for external library integrations
+Type safety ensures reliable retro game mechanics
+Interfaces define clear contracts between game systems
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Nostalgic Simplicity
+Embrace retro limitations as design constraints, not obstacles
+Character-based graphics and terminal aesthetics are features, not bugs
+Simple implementations preferred over complex optimizations
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Astro Static Generation
+Game must run as a static site with no server dependencies
+All game state managed client-side with TypeScript
+No external APIs or databases - pure frontend experience
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Extractable Design
+Core game component should be portable to other Astro projects
+Minimal file dependencies - ideally single component export
+Clear documentation for integration into other projects
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Technology Stack
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+**Framework**: Astro with TypeScript (strict mode)
+**Styling**: CSS modules or scoped styles only
+**Game Engine**: Custom TypeScript implementation, no external game libraries
+**Testing**: Lightweight - focus on component rendering and game logic validation
+**Build**: Standard Astro static build process
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Development Standards
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+**No Over-Engineering**: This is a fun nostalgic project, not enterprise software
+**Readable Code**: Clear variable names reflecting retro computing concepts
+**Performance**: Smooth 60fps character animation, but no micro-optimizations needed
+**Security**: Minimal concerns - no user data, no external connections
+**Maintenance**: Low maintenance design - avoid complex dependencies
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution reflects the fun, experimental nature of recreating a 1979 game
+Simplicity trumps best practices when they conflict with nostalgic authenticity
+Document decisions in code comments using retro computing terminology
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2025-09-18 | **Last Amended**: 2025-09-18
