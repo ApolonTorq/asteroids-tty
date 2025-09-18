@@ -37,35 +37,35 @@ Single Astro project structure:
 - Root level - Config files
 
 ## Phase 3.1: Setup
-- [ ] T001 Create Astro project structure with TypeScript strict mode
-- [ ] T002 Configure package.json with Astro, TypeScript, Vitest, Playwright dependencies
-- [ ] T003 [P] Configure TypeScript strict mode in tsconfig.json
-- [ ] T004 [P] Configure Vitest for unit testing in vite.config.ts
-- [ ] T005 [P] Configure Playwright for component integration testing
+- [x] T001 Create Astro project structure with TypeScript strict mode
+- [x] T002 Configure package.json with Astro, TypeScript, Vitest, Playwright dependencies
+- [x] T003 [P] Configure TypeScript strict mode in tsconfig.json
+- [x] T004 [P] Configure Vitest for unit testing in vite.config.ts
+- [x] T005 [P] Configure Playwright for component integration testing
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
 
 ### Component Interface Tests
-- [ ] T006 [P] Component prop validation test in tests/component/AsteroidsGame.test.ts
-- [ ] T007 [P] Component rendering test in tests/component/component-rendering.test.ts
-- [ ] T008 [P] Game controls interface test in tests/component/game-controls.test.ts
+- [x] T006 [P] Component prop validation test in tests/component/AsteroidsGame.test.ts
+- [x] T007 [P] Component rendering test in tests/component/component-rendering.test.ts
+- [x] T008 [P] Game controls interface test in tests/component/game-controls.test.ts
 
 ### Game Logic Unit Tests
-- [ ] T009 [P] Position and Velocity interface tests in tests/unit/geometry.test.ts
-- [ ] T010 [P] Spaceship state management tests in tests/unit/spaceship.test.ts
-- [ ] T011 [P] Asteroid behavior tests in tests/unit/asteroid.test.ts
-- [ ] T012 [P] Projectile lifecycle tests in tests/unit/projectile.test.ts
-- [ ] T013 [P] GameState management tests in tests/unit/game-state.test.ts
-- [ ] T014 [P] Collision detection tests in tests/unit/collision.test.ts
+- [x] T009 [P] Position and Velocity interface tests in tests/unit/geometry.test.ts
+- [x] T010 [P] Spaceship state management tests in tests/unit/spaceship.test.ts
+- [x] T011 [P] Asteroid behavior tests in tests/unit/asteroid.test.ts
+- [x] T012 [P] Projectile lifecycle tests in tests/unit/projectile.test.ts
+- [x] T013 [P] GameState management tests in tests/unit/game-state.test.ts
+- [x] T014 [P] Collision detection tests in tests/unit/collision.test.ts
 
 ### Integration Scenario Tests (from quickstart.md)
-- [ ] T015 [P] Basic gameplay scenario test in tests/integration/basic-gameplay.test.ts
-- [ ] T016 [P] Vertical scrolling mode test in tests/integration/scrolling-mode.test.ts
-- [ ] T017 [P] Traditional mode test in tests/integration/traditional-mode.test.ts
-- [ ] T018 [P] Character mode toggle test in tests/integration/character-toggle.test.ts
-- [ ] T019 [P] Game over sequence test in tests/integration/game-over.test.ts
-- [ ] T020 [P] Level progression test in tests/integration/level-progression.test.ts
+- [x] T015 [P] Basic gameplay scenario test in tests/integration/basic-gameplay.test.ts
+- [x] T016 [P] Vertical scrolling mode test in tests/integration/scrolling-mode.test.ts
+- [x] T017 [P] Traditional mode test in tests/integration/traditional-mode.test.ts
+- [x] T018 [P] Character mode toggle test in tests/integration/character-toggle.test.ts
+- [x] T019 [P] Game over sequence test in tests/integration/game-over.test.ts
+- [x] T020 [P] Level progression test in tests/integration/level-progression.test.ts
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 

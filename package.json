@@ -1,0 +1,48 @@
+{
+  "name": "asteroids-tty",
+  "type": "module",
+  "version": "0.0.1",
+  "description": "Retro terminal-based recreation of the classic Asteroids game using character graphics",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:integration": "playwright test",
+    "lint": "eslint src --ext .ts,.astro",
+    "type-check": "astro check"
+  },
+  "dependencies": {
+    "astro": "^4.13.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.8.3",
+    "@playwright/test": "^1.46.1",
+    "@types/node": "^20.14.14",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "@vitest/coverage-v8": "^2.0.5",
+    "@vitest/ui": "^2.0.5",
+    "eslint": "^8.57.0",
+    "eslint-plugin-astro": "^1.2.3",
+    "jsdom": "^24.1.1",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0",
+    "vitest": "^2.0.5"
+  },
+  "keywords": [
+    "asteroids",
+    "retro",
+    "terminal",
+    "game",
+    "astro",
+    "typescript",
+    "character-graphics"
+  ],
+  "author": "Apolon Ivankovic",
+  "license": "MIT"
+}
