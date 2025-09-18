@@ -1,0 +1,125 @@
+---
+// Minimal test page - no imports
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test - Minimal Animation</title>
+  <style>
+    body {
+      background: #222;
+      color: #0f0;
+      font-family: 'Courier New', monospace;
+      padding: 2rem;
+    }
+    #test-game {
+      width: 80ch;
+      height: 25em;
+      background: #000;
+      border: 2px solid #0f0;
+      position: relative;
+      overflow: hidden;
+    }
+    .test-element {
+      position: absolute;
+      color: #0f0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Minimal RAF Test</h1>
+  <p>This tests basic requestAnimationFrame performance with a single moving element.</p>
+  <div id="test-game">
+    <p style="text-align: center; padding: 2rem;">Loading...</p>
+  </div>
+  <div id="log"></div>
+</body>
+</html>
+
+<script>
+console.log('[TEST] Starting minimal animation test');
+
+const container = document.getElementById('test-game');
+const logDiv = document.getElementById('log');
+
+// Clear container
+container.innerHTML = '';
+
+// Create a single test element
+const testElement = document.createElement('span');
+testElement.className = 'test-element';
+testElement.textContent = 'X';
+testElement.style.left = '10ch';
+testElement.style.top = '10em';
+container.appendChild(testElement);
+
+let frameCount = 0;
+let lastTime = performance.now();
+let rafId = null;
+let testRunning = true;
+let x = 10;
+let direction = 1;
+
+function updateLog(message) {
+  console.log(message);
+  logDiv.textContent = message;
+}
+
+function testLoop(currentTime) {
+  if (!testRunning) {
+    updateLog('[TEST] Stopped');
+    return;
+  }
+
+  frameCount++;
+  const deltaTime = currentTime - lastTime;
+
+  // Only update every few milliseconds to reduce load
+  if (deltaTime < 33) { // ~30 FPS
+    rafId = requestAnimationFrame(testLoop);
+    return;
+  }
+
+  lastTime = currentTime;
+
+  // Update position
+  x += direction * 0.5;
+  if (x > 70 || x < 10) {
+    direction *= -1;
+  }
+
+  // Update element position
+  testElement.style.left = x + 'ch';
+
+  // Log every 60 frames
+  if (frameCount % 60 === 0) {
+    const fps = Math.round(1000 / deltaTime);
+    updateLog(`[TEST] Frame ${frameCount}, FPS: ${fps}`);
+  }
+
+  // Emergency stop after 1000 frames
+  if (frameCount > 1000) {
+    updateLog('[TEST] Emergency stop at frame 1000');
+    testRunning = false;
+    return;
+  }
+
+  rafId = requestAnimationFrame(testLoop);
+}
+
+// Start the test loop after a delay
+updateLog('[TEST] Starting in 1 second...');
+setTimeout(() => {
+  updateLog('[TEST] Starting RAF loop');
+  rafId = requestAnimationFrame(testLoop);
+}, 1000);
+
+// Stop on page unload
+window.addEventListener('beforeunload', () => {
+  testRunning = false;
+  if (rafId) cancelAnimationFrame(rafId);
+});
+</script>

@@ -71,7 +71,7 @@ export function getAsteroidCountForLevel(level: number): number {
 }
 
 export function getAsteroidSpeedForLevel(level: number): number {
-  return 1 + (level - 1) * 0.2; // Increase speed by 20% per level
+  return 0.15 + (level - 1) * 0.05; // Start at 0.15, increase by 0.05 per level
 }
 
 export function getLevelCompletionBonus(level: number): number {

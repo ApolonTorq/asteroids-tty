@@ -46,13 +46,16 @@ export class GameStateManager {
       score: config.score || 0,
       level: config.level || DEFAULT_LEVEL,
       lives: config.lives || DEFAULT_LIVES,
-      gameMode: config.gameMode || 'scrolling',
+      gameMode: config.gameMode || 'traditional',
       characterMode: config.characterMode || 'ascii',
       screenSize,
       difficulty: config.difficulty || 'normal',
       gameStatus: 'playing',
       objects: {
-        spaceship: createSpaceship({ position: spaceshipPosition }),
+        spaceship: createSpaceship({
+          position: spaceshipPosition,
+          velocity: { dx: 0, dy: 0 }  // Explicitly set zero velocity
+        }),
         asteroids: [],
         projectiles: []
       }
@@ -94,6 +97,11 @@ export class GameStateManager {
       asteroids: [...this.state.objects.asteroids],
       projectiles: [...this.state.objects.projectiles]
     };
+  }
+
+  // Get mutable objects for physics updates
+  getMutableObjects(): GameObjects {
+    return this.state.objects;
   }
 
   // Score management
@@ -228,7 +236,7 @@ export class GameStateManager {
   }
 
   toggleGameMode(): GameMode {
-    this.state.gameMode = this.state.gameMode === 'scrolling' ? 'traditional' : 'scrolling';
+    this.state.gameMode = this.state.gameMode === 'traditional' ? 'scrolling' : 'traditional';
     return this.state.gameMode;
   }
 
@@ -265,6 +273,11 @@ export class GameStateManager {
 
   // Object management
   addProjectile(projectile: Projectile): void {
+    // Safety limit to prevent unbounded growth
+    if (this.state.objects.projectiles.length > 20) {
+      console.warn('[GameState] Too many projectiles:', this.state.objects.projectiles.length);
+      return;
+    }
     this.state.objects.projectiles.push(projectile);
   }
 
@@ -273,6 +286,11 @@ export class GameStateManager {
   }
 
   addAsteroidFragments(fragments: Asteroid[]): void {
+    // Safety limit to prevent unbounded growth
+    if (this.state.objects.asteroids.length + fragments.length > 50) {
+      console.error('[GameState] Too many asteroids! Current:', this.state.objects.asteroids.length, 'Adding:', fragments.length);
+      return;
+    }
     this.state.objects.asteroids.push(...fragments);
   }
 

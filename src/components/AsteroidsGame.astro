@@ -23,7 +23,7 @@ const {
   width = 80,
   height = 25,
   characterMode = 'ascii',
-  physicsMode = 'scrolling',
+  physicsMode = 'traditional',
   difficulty = 'normal',
   autoStart = true,
   showControls = true,
@@ -156,253 +156,148 @@ const componentId = `asteroids-game-${Math.random().toString(36).substring(2, 11
   }
 </style>
 
-<script type="module">
-  // Configuration passed from Astro props
-  const gameContainer = document.querySelector('.asteroids-game-container');
-  const config = {
-    screenSize: {width: ${width}, height: ${height}},
-    displayConfig: ${JSON.stringify(displayConfig)},
-    physicsMode: "${physicsMode}",
-    difficulty: "${difficulty}",
-    autoStart: ${autoStart},
-    componentId: gameContainer?.id || 'asteroids-game-default'
-  };
 
-  // Dynamic imports for game engine components
-  async function loadGameModules() {
-    try {
-      const [
-        gameLoopModule,
-        physicsModule,
-        collisionModule,
-        rendererModule,
-        gameStateModule,
-        inputModule
-      ] = await Promise.all([
-        import('../lib/engine/game-loop.js'),
-        import('../lib/engine/physics.js'),
-        import('../lib/engine/collision.js'),
-        import('../lib/engine/renderer.js'),
-        import('../lib/engine/game-state.js'),
-        import('../lib/engine/input.js')
-      ]);
+<script>
+console.log('[AsteroidsGame] Script starting...');
 
-      return {
-        GameLoop: gameLoopModule.GameLoop,
-        PhysicsEngine: physicsModule.PhysicsEngine,
-        CollisionSystem: collisionModule.CollisionSystem,
-        Renderer: rendererModule.Renderer,
-        GameStateManager: gameStateModule.GameStateManager,
-        InputHandler: inputModule.InputHandler
-      };
-    } catch (error) {
-      console.error('Failed to load game modules:', error);
-      throw new Error(`Module loading failed: ${error.message}`);
-    }
+import { GameLoop } from '../lib/engine/game-loop.js';
+import { PhysicsEngine } from '../lib/engine/physics.js';
+import { CollisionSystem } from '../lib/engine/collision.js';
+import { SimpleRenderer } from '../lib/engine/simple-renderer.js';
+import { GameStateManager } from '../lib/engine/game-state.js';
+import { InputHandler } from '../lib/engine/input.js';
+
+console.log('[AsteroidsGame] Modules imported successfully');
+
+// Component configuration
+const componentId = document.querySelector('.asteroids-game-container')?.id || 'asteroids-game-default';
+const config = {
+  screenSize: {width: 80, height: 25},
+  displayConfig: {
+    characterMode: "ascii",
+    characterSet: {
+      spaceship: { up: "^", down: "v", left: "<", right: ">" },
+      asteroid: { large: "O", small: "o" },
+      projectile: "."
+    },
+    colors: {
+      background: "#000000",
+      foreground: "#00FF00",
+      accent: "#FFFF00",
+      highlight: "#FF0000"
+    },
+    screenSize: {width: 80, height: 25}
+  },
+  physicsMode: "traditional",
+  difficulty: "normal",
+  autoStart: true,
+  componentId: componentId
+};
+
+// Game instance variables
+let gameLoop = null;
+let gameContainer = null;
+let gameInitialized = false;
+
+// Initialize game
+async function initializeGame() {
+  console.log('initializeGame called, already initialized?', gameInitialized);
+
+  if (gameInitialized) {
+    console.warn('Game already initialized, skipping!');
+    return;
   }
 
-  // Game instance variables
-  let gameLoop = null;
-  let gameContainer = null;
-  let gameInitialized = false;
+  gameContainer = document.getElementById(config.componentId) || document.querySelector('.asteroids-game-container');
+  if (!gameContainer) {
+    console.error('Game container not found');
+    return;
+  }
 
-  // Initialize game when DOM is ready
-  async function initializeGame() {
-    if (gameInitialized) return;
+  console.log('Starting game initialization...');
+  try {
+    // Create game systems
+    const physics = new PhysicsEngine(config.screenSize, config.physicsMode);
+    const collision = new CollisionSystem(config.screenSize.width, config.screenSize.height);
+    const renderer = new SimpleRenderer(config.screenSize.width, config.screenSize.height);
+    const gameState = new GameStateManager({
+      screenSize: config.screenSize,
+      gameMode: config.physicsMode,
+      characterMode: config.displayConfig.characterMode,
+      difficulty: config.difficulty
+    });
+    const input = new InputHandler(gameContainer);
 
-    gameContainer = document.getElementById(config.componentId);
-    if (!gameContainer) {
-      console.error('Game container not found');
-      return;
+    // Create game loop with normal settings
+    gameLoop = new GameLoop(physics, collision, renderer, gameState, input, {
+      targetFPS: 30,  // Normal FPS for smooth gameplay
+      maxDeltaTime: 50,
+      enableDebug: false
+    });
+
+    // Create game wrapper
+    const gameWrapper = document.createElement('div');
+    gameWrapper.className = 'game-wrapper';
+    gameWrapper.style.cssText = 'position: relative; display: inline-block;';
+
+    const gameElement = renderer.createDOMElement();
+    gameElement.tabIndex = 0;
+    gameWrapper.appendChild(gameElement);
+
+    // Replace loading message
+    const loadingElement = gameContainer.querySelector('.game-loading');
+    if (loadingElement) {
+      gameContainer.replaceChild(gameWrapper, loadingElement);
     }
 
-    try {
-      // Load game modules
-      const { GameLoop, PhysicsEngine, CollisionSystem, Renderer, GameStateManager, InputHandler } = await loadGameModules();
+    gameState.spawnAsteroidsForLevel(1);
 
-      // Create game systems
-      const physics = new PhysicsEngine(config.screenSize.width, config.screenSize.height);
-      physics.setGameMode(config.physicsMode);
-
-      const collision = new CollisionSystem(config.screenSize.width, config.screenSize.height);
-
-      const renderer = new Renderer(config.screenSize.width, config.screenSize.height, config.displayConfig);
-
-      const gameState = new GameStateManager({
-        screenSize: config.screenSize,
-        gameMode: config.physicsMode,
-        characterMode: config.displayConfig.characterMode,
-        difficulty: config.difficulty
-      });
-
-      const input = new InputHandler(gameContainer);
-
-      // Create game loop with callbacks
-      const callbacks = {};
-      let hudElement = null; // Will be set after HUD creation
-
-      // Set up callbacks if provided by props
-      if (onGameOver && typeof window !== 'undefined' && window.astroGameCallbacks?.[componentId]?.onGameOver) {
-        callbacks.onGameOver = window.astroGameCallbacks[componentId].onGameOver;
+    // Log initial state
+    const initialState = gameState.getState();
+    console.log('[AsteroidsGame] Initial game state:', {
+      asteroids: initialState.objects.asteroids.length,
+      projectiles: initialState.objects.projectiles.length,
+      spaceship: initialState.objects.spaceship.alive,
+      spaceshipPos: {
+        x: initialState.objects.spaceship.position.x,
+        y: initialState.objects.spaceship.position.y
+      },
+      spaceshipVel: {
+        dx: initialState.objects.spaceship.velocity.dx,
+        dy: initialState.objects.spaceship.velocity.dy
       }
+    });
 
-      if (onLevelComplete && typeof window !== 'undefined' && window.astroGameCallbacks?.[componentId]?.onLevelComplete) {
-        callbacks.onLevelComplete = window.astroGameCallbacks[componentId].onLevelComplete;
-      }
-
-      if (onScoreChange && typeof window !== 'undefined' && window.astroGameCallbacks?.[componentId]?.onScoreChange) {
-        callbacks.onScoreChange = window.astroGameCallbacks[componentId].onScoreChange;
-      }
-
-      // Add HUD update callback
-      callbacks.onUpdate = (frameData) => {
-        if (hudElement) {
-          const currentState = gameState.getState();
-          const newHUD = renderer.renderHUD({
-            score: currentState.score,
-            level: currentState.level,
-            lives: currentState.lives,
-            gameStatus: currentState.gameStatus,
-            fps: Math.round(frameData.fps)
-          });
-
-          // Replace existing HUD
-          const gameWrapper = hudElement.parentElement;
-          if (gameWrapper) {
-            gameWrapper.replaceChild(newHUD, hudElement);
-            hudElement = newHUD;
-          }
-        }
-      };
-
-      gameLoop = new GameLoop(
-        physics,
-        collision,
-        renderer,
-        gameState,
-        input,
-        {
-          targetFPS: 60,
-          maxDeltaTime: 50,
-          enableDebug: false
-        },
-        callbacks
-      );
-
-      // Create game wrapper with HUD
-      const gameWrapper = document.createElement('div');
-      gameWrapper.className = 'game-wrapper';
-      gameWrapper.style.cssText = 'position: relative; display: inline-block;';
-
-      // Create and insert game DOM element
-      const gameElement = renderer.createDOMElement();
-      gameElement.tabIndex = 0; // Make focusable
-
-      // Create HUD element
-      hudElement = renderer.renderHUD({
-        score: gameState.getScore(),
-        level: gameState.getLevel(),
-        lives: gameState.getLives(),
-        gameStatus: gameState.getGameStatus()
-      });
-
-      // Assemble game wrapper
-      gameWrapper.appendChild(gameElement);
-      gameWrapper.appendChild(hudElement);
-
-      // Replace loading message
-      const loadingElement = gameContainer.querySelector('.game-loading');
-      if (loadingElement) {
-        gameContainer.replaceChild(gameWrapper, loadingElement);
-      } else {
-        gameContainer.insertBefore(gameWrapper, gameContainer.firstChild);
-      }
-
-      // Set up initial level
-      gameState.spawnAsteroidsForLevel(1);
-
-      // Auto-start if requested
-      if (config.autoStart) {
+    if (config.autoStart) {
+      console.log('[AsteroidsGame] Starting game loop with safety limits...');
+      // Add a delayed start to ensure everything is ready
+      setTimeout(() => {
+        console.log('[AsteroidsGame] Actually starting game loop now');
         gameLoop.start();
-      }
-
-      // Focus game element for keyboard input
-      gameElement.focus();
-
-      gameInitialized = true;
-
-      // Expose game loop for external control
-      if (typeof window !== 'undefined') {
-        window.astroGameInstances = window.astroGameInstances || {};
-        window.astroGameInstances[config.componentId] = gameLoop;
-      }
-
-    } catch (error) {
-      console.error('Failed to initialize Asteroids game:', error);
-
-      // Show error message
-      const errorElement = document.createElement('div');
-      errorElement.className = 'game-error';
-      errorElement.innerHTML = `
-        <p><strong>Error loading game:</strong></p>
-        <p>${error.message}</p>
-        <p>Please check the console for more details.</p>
-      `;
-      errorElement.style.cssText = `
-        color: #FF0000;
-        text-align: center;
-        padding: 2rem;
-        border: 1px solid #FF0000;
-        background-color: #220000;
-        border-radius: 4px;
-      `;
-
-      const loadingElement = gameContainer.querySelector('.game-loading');
-      if (loadingElement) {
-        gameContainer.replaceChild(errorElement, loadingElement);
-      }
-    }
-  }
-
-  // Cleanup function
-  function cleanup() {
-    if (gameLoop) {
-      gameLoop.destroy();
-      gameLoop = null;
+      }, 100);
     }
 
-    if (typeof window !== 'undefined' && window.astroGameInstances) {
-      delete window.astroGameInstances[config.componentId];
+    gameElement.focus();
+    gameInitialized = true;
+    console.log('Game initialization complete');
+
+  } catch (error) {
+    console.error('Failed to initialize Asteroids game:', error);
+    const errorElement = document.createElement('div');
+    errorElement.innerHTML = `<p>Error loading game: ${error.message}</p>`;
+    errorElement.style.cssText = 'color: #FF0000; text-align: center; padding: 2rem;';
+
+    const loadingElement = gameContainer.querySelector('.game-loading');
+    if (loadingElement) {
+      gameContainer.replaceChild(errorElement, loadingElement);
     }
-
-    gameInitialized = false;
   }
+}
 
-  // Initialize when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeGame);
-  } else {
-    // DOM already loaded
-    setTimeout(initializeGame, 0);
-  }
-
-  // Cleanup on page unload
-  if (typeof window !== 'undefined') {
-    window.addEventListener('beforeunload', cleanup);
-  }
-
-  // Public API for external control
-  if (typeof window !== 'undefined') {
-    window.AsteroidsGame = window.AsteroidsGame || {};
-    window.AsteroidsGame[config.componentId] = {
-      start: () => gameLoop?.start(),
-      stop: () => gameLoop?.stop(),
-      pause: () => gameLoop?.pause(),
-      resume: () => gameLoop?.resume(),
-      reset: () => gameLoop?.reset(),
-      getStats: () => gameLoop?.getPerformanceStats(),
-      getDebugInfo: () => gameLoop?.getDebugInfo(),
-      isRunning: () => gameLoop?.isRunning() || false
-    };
-  }
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeGame);
+} else {
+  setTimeout(initializeGame, 0);
+}
 </script>

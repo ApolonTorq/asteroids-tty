@@ -22,12 +22,12 @@ export interface PhysicsConfig {
 }
 
 export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
-  thrustPower: 0.3,
-  dampingFactor: 0.99,
-  maxSpeed: 8,
-  rotationSpeed: 5,
-  projectileSpeed: 5,
-  scrollSpeed: 0.5
+  thrustPower: 0.15,    // Reduced from 0.3 for better control
+  dampingFactor: 0.99,  // Increased from 0.98 for slower deceleration
+  maxSpeed: 2,          // Reduced from 5 for more manageable speed
+  rotationSpeed: 8,     // Slightly reduced from 10
+  projectileSpeed: 1.5,  // Reduced from 6 for visible projectiles
+  scrollSpeed: 0.5      // Moderate scrolling speed
 };
 
 export class PhysicsEngine {
@@ -37,7 +37,7 @@ export class PhysicsEngine {
 
   constructor(
     screenSize: ScreenSize,
-    gameMode: GameMode = 'scrolling',
+    gameMode: GameMode = 'traditional',
     config: Partial<PhysicsConfig> = {}
   ) {
     this.screenSize = screenSize;
@@ -52,6 +52,17 @@ export class PhysicsEngine {
     rotateRight: boolean;
   }): void {
     if (!spaceship.alive) return;
+
+    const oldVelocity = { ...spaceship.velocity };
+    const oldPosition = { ...spaceship.position };
+
+    if (this.updateCount <= 10) {
+      console.log('[Physics] START updateSpaceship:', {
+        oldPos: oldPosition,
+        oldVel: oldVelocity,
+        input
+      });
+    }
 
     // Handle rotation
     if (input.rotateLeft) {
@@ -68,6 +79,11 @@ export class PhysicsEngine {
       const thrustForce = scaleVelocity(thrustDirection, this.config.thrustPower);
       spaceship.velocity.dx += thrustForce.dx;
       spaceship.velocity.dy += thrustForce.dy;
+      console.log('[Physics] Thrust applied:', {
+        direction: thrustDirection,
+        force: thrustForce,
+        newVelocity: spaceship.velocity
+      });
     }
 
     // Apply damping (space friction)
@@ -83,19 +99,18 @@ export class PhysicsEngine {
     // Update position
     spaceship.position = addVelocityToPosition(spaceship.position, spaceship.velocity);
 
-    // Handle screen wrapping based on game mode
-    if (this.gameMode === 'traditional') {
-      spaceship.position = wrapPosition(spaceship.position, this.screenSize.width, this.screenSize.height);
-    } else {
-      // In scrolling mode, only wrap horizontally
-      if (spaceship.position.x < 0) {
-        spaceship.position.x = this.screenSize.width - 1;
-      } else if (spaceship.position.x >= this.screenSize.width) {
-        spaceship.position.x = 0;
-      }
+    // Always wrap around screen edges (proper asteroids behavior)
+    const preWrapPos = { ...spaceship.position };
+    spaceship.position = wrapPosition(spaceship.position, this.screenSize.width, this.screenSize.height);
 
-      // Keep spaceship in vertical bounds
-      spaceship.position.y = Math.max(0, Math.min(this.screenSize.height - 1, spaceship.position.y));
+    if (this.updateCount <= 10 || (preWrapPos.y !== spaceship.position.y || preWrapPos.x !== spaceship.position.x)) {
+      console.log('[Physics] END updateSpaceship:', {
+        newPos: spaceship.position,
+        newVel: spaceship.velocity,
+        preWrapPos,
+        screenSize: this.screenSize,
+        wrapped: preWrapPos.y !== spaceship.position.y || preWrapPos.x !== spaceship.position.x
+      });
     }
   }
 
@@ -106,26 +121,8 @@ export class PhysicsEngine {
     // Update position
     asteroid.position = addVelocityToPosition(asteroid.position, asteroid.velocity);
 
-    // Handle screen wrapping/behavior based on game mode
-    if (this.gameMode === 'traditional') {
-      asteroid.position = wrapPosition(asteroid.position, this.screenSize.width, this.screenSize.height);
-    } else {
-      // In scrolling mode, asteroids move with the scroll
-      asteroid.position.y += this.config.scrollSpeed;
-
-      // Wrap horizontally
-      if (asteroid.position.x < 0) {
-        asteroid.position.x = this.screenSize.width - 1;
-      } else if (asteroid.position.x >= this.screenSize.width) {
-        asteroid.position.x = 0;
-      }
-
-      // Respawn at top when going off bottom
-      if (asteroid.position.y >= this.screenSize.height) {
-        asteroid.position.y = -1;
-        asteroid.position.x = Math.random() * this.screenSize.width;
-      }
-    }
+    // Always use traditional wrapping for proper asteroids behavior
+    asteroid.position = wrapPosition(asteroid.position, this.screenSize.width, this.screenSize.height);
   }
 
   // Projectile physics
@@ -148,6 +145,8 @@ export class PhysicsEngine {
     }
   }
 
+  private updateCount = 0;
+
   // Update all game objects
   updateAllObjects(
     spaceship: Spaceship,
@@ -159,6 +158,17 @@ export class PhysicsEngine {
       rotateRight: boolean;
     }
   ): void {
+    this.updateCount++;
+
+    // Log first 10 frames to debug initialization
+    if (this.updateCount <= 10) {
+      console.log(`[Physics] Frame ${this.updateCount} - updateAllObjects entry:`, {
+        velocity: spaceship.velocity,
+        position: spaceship.position,
+        input: input
+      });
+    }
+
     // Update spaceship
     this.updateSpaceship(spaceship, input);
 
@@ -168,26 +178,7 @@ export class PhysicsEngine {
     // Update projectiles
     projectiles.forEach(projectile => this.updateProjectile(projectile));
 
-    // In scrolling mode, apply background scroll effect
-    if (this.gameMode === 'scrolling') {
-      this.applyScrollingPhysics(spaceship, asteroids);
-    }
-  }
-
-  // Scrolling mode specific physics
-  private applyScrollingPhysics(spaceship: Spaceship, asteroids: Asteroid[]): void {
-    // In scrolling mode, the "screen" moves upward
-    // This creates the illusion that everything is moving down
-
-    // Apply scroll compensation to spaceship if it's not thrusting against scroll
-    if (!spaceship.thrust || spaceship.velocity.dy >= 0) {
-      spaceship.position.y += this.config.scrollSpeed;
-    }
-
-    // Ensure spaceship doesn't go off screen
-    if (spaceship.position.y >= this.screenSize.height) {
-      spaceship.position.y = this.screenSize.height - 1;
-    }
+    // No scrolling physics - pure space physics only
   }
 
   // Utility methods
@@ -220,14 +211,14 @@ export class PhysicsEngine {
   // Helper for creating projectiles with correct physics
   createProjectileFromSpaceship(spaceship: Spaceship): Projectile {
     const direction = rotationToDirection(spaceship.rotation);
+    // Projectile moves in the direction spaceship is pointing
     const velocity = scaleVelocity(direction, this.config.projectileSpeed);
 
-    // Add spaceship's velocity to projectile (momentum conservation)
-    velocity.dx += spaceship.velocity.dx * 0.5;
-    velocity.dy += spaceship.velocity.dy * 0.5;
+    // Don't add spaceship velocity - projectiles should shoot straight
+    // This makes them easier to aim and more predictable
 
     // Start position slightly ahead of spaceship
-    const startOffset = 1.2;
+    const startOffset = 1.5;
     const startPosition: Position = {
       x: spaceship.position.x + direction.dx * startOffset,
       y: spaceship.position.y + direction.dy * startOffset
@@ -236,8 +227,8 @@ export class PhysicsEngine {
     return {
       position: startPosition,
       velocity,
-      lifespan: 60, // 1 second at 60fps
-      character: '.',
+      lifespan: 90, // 1.5 seconds at 60fps (increased for slower projectiles)
+      character: '*',  // Changed from '.' to '*' for better visibility
       active: true
     };
   }

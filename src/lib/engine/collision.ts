@@ -29,7 +29,7 @@ export interface GameCollisionResults {
 export class CollisionSystem {
   private tolerance: number;
 
-  constructor(tolerance: number = 0.1) {
+  constructor(screenWidth: number, screenHeight: number, tolerance: number = 1.5) {
     this.tolerance = tolerance;
   }
 

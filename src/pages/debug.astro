@@ -1,0 +1,139 @@
+---
+// Debug page to test physics directly
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Physics Debug</title>
+  <style>
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+      padding: 1rem;
+    }
+    #game {
+      width: 80ch;
+      height: 25em;
+      border: 2px solid #0f0;
+      position: relative;
+      background: #000;
+    }
+    #ship {
+      position: absolute;
+      color: #0f0;
+    }
+    #log {
+      margin-top: 1rem;
+      white-space: pre;
+      font-size: 0.8em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Physics Debug Test</h1>
+  <div id="game">
+    <span id="ship">^</span>
+  </div>
+  <div id="log"></div>
+</body>
+</html>
+
+<script>
+// Direct physics test without game engine
+const ship = document.getElementById('ship');
+const log = document.getElementById('log');
+const gameWidth = 80;
+const gameHeight = 25;
+
+// Ship state
+let position = { x: 40, y: 12 };
+let velocity = { dx: 0, dy: 0 };
+let rotation = 0;
+let frameCount = 0;
+
+// Input state
+let keys = {
+  thrust: false,
+  left: false,
+  right: false
+};
+
+// Key bindings
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyW' || e.code === 'ArrowUp') keys.thrust = true;
+  if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = true;
+  if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = true;
+});
+
+window.addEventListener('keyup', (e) => {
+  if (e.code === 'KeyW' || e.code === 'ArrowUp') keys.thrust = false;
+  if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = false;
+  if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = false;
+});
+
+function updatePhysics() {
+  frameCount++;
+
+  // Log first 10 frames
+  if (frameCount <= 10) {
+    console.log(`Frame ${frameCount}:`, {
+      position: {...position},
+      velocity: {...velocity},
+      keys: {...keys}
+    });
+  }
+
+  // Rotation
+  if (keys.left) rotation -= 10;
+  if (keys.right) rotation += 10;
+  rotation = (rotation + 360) % 360;
+
+  // Thrust
+  if (keys.thrust) {
+    const rad = rotation * Math.PI / 180;
+    velocity.dx += Math.sin(rad) * 0.3;
+    velocity.dy += -Math.cos(rad) * 0.3;
+  }
+
+  // Damping
+  velocity.dx *= 0.98;
+  velocity.dy *= 0.98;
+
+  // Update position
+  position.x += velocity.dx;
+  position.y += velocity.dy;
+
+  // Wrap position
+  if (position.x < 0) position.x = gameWidth - 1;
+  if (position.x >= gameWidth) position.x = 0;
+  if (position.y < 0) position.y = gameHeight - 1;
+  if (position.y >= gameHeight) position.y = 0;
+
+  // Update display
+  ship.style.left = Math.floor(position.x) + 'ch';
+  ship.style.top = Math.floor(position.y) + 'em';
+
+  // Update ship character based on rotation
+  const chars = ['^', '>', 'v', '<'];
+  ship.textContent = chars[Math.round(rotation / 90) % 4];
+
+  // Update log
+  if (frameCount % 30 === 0) {
+    log.textContent = `Frame: ${frameCount}
+Position: ${position.x.toFixed(2)}, ${position.y.toFixed(2)}
+Velocity: ${velocity.dx.toFixed(3)}, ${velocity.dy.toFixed(3)}
+Rotation: ${rotation}
+Keys: thrust=${keys.thrust}, left=${keys.left}, right=${keys.right}`;
+  }
+}
+
+// Run at 30 FPS
+setInterval(updatePhysics, 33);
+
+console.log('Debug physics test started. Use WASD or arrow keys to control.');
+console.log('Initial state:', { position, velocity });
+</script>

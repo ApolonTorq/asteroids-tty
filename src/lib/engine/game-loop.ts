@@ -2,7 +2,9 @@ import type { GameState } from '../types/game-state.js';
 import type { InputState } from './input.js';
 import { PhysicsEngine } from './physics.js';
 import { CollisionSystem } from './collision.js';
-import { Renderer } from './renderer.js';
+// Import either renderer type - they share the same interface
+import type { Renderer } from './renderer.js';
+import type { SimpleRenderer } from './simple-renderer.js';
 import { GameStateManager } from './game-state.js';
 import { InputHandler } from './input.js';
 import { createProjectileFromSpaceship } from '../types/projectile.js';
@@ -31,7 +33,7 @@ export interface GameLoopCallbacks {
 export class GameLoop {
   private physics: PhysicsEngine;
   private collision: CollisionSystem;
-  private renderer: Renderer;
+  private renderer: Renderer | SimpleRenderer;
   private gameState: GameStateManager;
   private input: InputHandler;
 
@@ -52,7 +54,7 @@ export class GameLoop {
   constructor(
     physics: PhysicsEngine,
     collision: CollisionSystem,
-    renderer: Renderer,
+    renderer: Renderer | SimpleRenderer,
     gameState: GameStateManager,
     input: InputHandler,
     config: Partial<GameLoopConfig> = {},
@@ -65,8 +67,8 @@ export class GameLoop {
     this.input = input;
 
     this.config = {
-      targetFPS: 60,
-      maxDeltaTime: 50, // 50ms max to prevent large jumps
+      targetFPS: 30,  // Reduced from 60 for better performance
+      maxDeltaTime: 100, // 100ms max to prevent large jumps
       enableDebug: false,
       ...config
     };
@@ -119,12 +121,40 @@ export class GameLoop {
     });
   }
 
+  // Track RAF calls
+  private rafCallCount = 0;
+  private rafCountStartTime = performance.now();
+  private emergencyStop = false;
+
   // Main game loop
   private gameLoopStep = (currentTime: number): void => {
-    if (!this.running) return;
+    if (!this.running || this.emergencyStop) return;
+
+    // Track RAF frequency and emergency stop if runaway
+    this.rafCallCount++;
+    const rafCheckTime = performance.now();
+    if (rafCheckTime - this.rafCountStartTime >= 1000) {
+      if (this.rafCallCount > 70) {
+        console.error('EMERGENCY STOP: RAF called', this.rafCallCount, 'times in 1 second!');
+        this.emergencyStop = true;
+        this.stop();
+        return;
+      }
+      this.rafCallCount = 0;
+      this.rafCountStartTime = rafCheckTime;
+    }
+
+    const frameStartTime = performance.now();
 
     // Calculate delta time
-    const deltaTime = Math.min(currentTime - this.lastFrameTime, this.config.maxDeltaTime);
+    const deltaTime = currentTime - this.lastFrameTime;
+
+    // Frame skipping - only update if enough time has passed
+    if (deltaTime < this.targetFrameTime) {
+      requestAnimationFrame(this.gameLoopStep);
+      return;
+    }
+
     this.lastFrameTime = currentTime;
 
     const frameData: FrameData = {
@@ -134,11 +164,20 @@ export class GameLoop {
       timestamp: currentTime
     };
 
-    // Update game
-    this.update(frameData);
+    // Log every 300 frames (10 seconds at 30fps)
+    if (this.frameNumber % 300 === 0 && this.frameNumber > 0) {
+      console.log('Frame', this.frameNumber, 'FPS:', Math.round(frameData.fps));
+    }
 
-    // Render game
+    // Update game with timing
+    const updateStart = performance.now();
+    this.update(frameData);
+    const updateTime = performance.now() - updateStart;
+
+    // Render game with timing
+    const renderStart = performance.now();
     this.render(frameData);
+    const renderTime = performance.now() - renderStart;
 
     // Update performance tracking
     this.updatePerformanceMetrics(deltaTime);
@@ -146,6 +185,18 @@ export class GameLoop {
     // Callbacks
     this.callbacks.onUpdate?.(frameData);
     this.callbacks.onRender?.(frameData);
+
+    const totalFrameTime = performance.now() - frameStartTime;
+
+    // Log slow frames
+    if (totalFrameTime > 33) { // More than 33ms (30fps threshold)
+      console.warn('Slow frame!', {
+        frame: this.frameNumber,
+        total: totalFrameTime.toFixed(2) + 'ms',
+        update: updateTime.toFixed(2) + 'ms',
+        render: renderTime.toFixed(2) + 'ms'
+      });
+    }
 
     this.frameNumber++;
 
@@ -155,6 +206,18 @@ export class GameLoop {
 
   private update(frameData: FrameData): void {
     const state = this.gameState.getState();
+    // Get mutable objects for physics updates
+    const mutableObjects = this.gameState.getMutableObjects();
+
+    // Log object counts periodically
+    if (this.frameNumber % 100 === 0) {
+      console.log('[GameLoop] Update cycle', {
+        frame: this.frameNumber,
+        asteroids: mutableObjects.asteroids.filter(a => a.active).length,
+        projectiles: mutableObjects.projectiles.filter(p => p.active).length,
+        status: state.gameStatus
+      });
+    }
 
     // Skip update if game is paused or over
     if (state.gameStatus !== 'playing') {
@@ -164,11 +227,20 @@ export class GameLoop {
     // Get input state
     const inputState = this.input.getInputState();
 
-    // Update physics
+    // Log first 10 frames to debug physics
+    if (this.frameNumber <= 10) {
+      console.log(`[GameLoop] Frame ${this.frameNumber} - BEFORE physics update:`, {
+        spaceshipPos: { ...mutableObjects.spaceship.position },
+        spaceshipVel: { ...mutableObjects.spaceship.velocity },
+        input: { thrust: inputState.thrust, left: inputState.rotateLeft, right: inputState.rotateRight }
+      });
+    }
+
+    // Update physics with mutable objects
     this.physics.updateAllObjects(
-      state.objects.spaceship,
-      state.objects.asteroids,
-      state.objects.projectiles,
+      mutableObjects.spaceship,
+      mutableObjects.asteroids,
+      mutableObjects.projectiles,
       {
         thrust: inputState.thrust,
         rotateLeft: inputState.rotateLeft,
@@ -176,11 +248,19 @@ export class GameLoop {
       }
     );
 
-    // Process collisions
+    // Log after physics update
+    if (this.frameNumber <= 10) {
+      console.log(`[GameLoop] Frame ${this.frameNumber} - AFTER physics update:`, {
+        spaceshipPos: { ...mutableObjects.spaceship.position },
+        spaceshipVel: { ...mutableObjects.spaceship.velocity }
+      });
+    }
+
+    // Process collisions with the full state (collision system may need readonly access)
     const collisionResults = this.collision.processAllCollisions(state);
 
     // Handle collision results
-    if (collisionResults.spaceshipHit && state.objects.spaceship.alive) {
+    if (collisionResults.spaceshipHit && mutableObjects.spaceship.alive) {
       this.gameState.loseLife();
 
       if (state.gameStatus === 'gameOver') {
@@ -212,14 +292,8 @@ export class GameLoop {
   private render(frameData: FrameData): void {
     const state = this.gameState.getState();
 
-    // Render game state
+    // Render game state - SimpleRenderer updates DOM directly
     this.renderer.renderGameState(state);
-
-    // Update DOM
-    this.renderer.updateDOMElement();
-
-    // Update FPS display
-    this.renderer.updateFPS();
   }
 
   // Control methods

@@ -34,18 +34,31 @@ export function calculateDistance(pos1: Position, pos2: Position): number {
 export function wrapPosition(position: Position, screenWidth: number, screenHeight: number): Position {
   let { x, y } = position;
 
-  // Wrap X coordinate
-  if (x >= screenWidth) {
-    x = x - screenWidth;
-  } else if (x < 0) {
-    x = screenWidth + x;
+  // Handle NaN or Infinity
+  if (!isFinite(x) || !isFinite(y)) {
+    console.error('[wrapPosition] Invalid position detected!', { x, y });
+    return { x: screenWidth / 2, y: screenHeight / 2 }; // Reset to center
   }
 
-  // Wrap Y coordinate
-  if (y >= screenHeight) {
-    y = y - screenHeight;
-  } else if (y < 0) {
-    y = screenHeight + y;
+  // Wrap X coordinate with modulo for efficiency
+  x = ((x % screenWidth) + screenWidth) % screenWidth;
+
+  // Wrap Y coordinate with modulo for efficiency
+  y = ((y % screenHeight) + screenHeight) % screenHeight;
+
+  // Final safety check
+  if (x < 0) x = 0;
+  if (x >= screenWidth) x = screenWidth - 0.1;
+  if (y < 0) y = 0;
+  if (y >= screenHeight) y = screenHeight - 0.1;
+
+  // Debug log if position is still out of bounds
+  if (y >= screenHeight || y < 0 || x >= screenWidth || x < 0) {
+    console.error('[wrapPosition] Failed to wrap!', {
+      input: position,
+      output: { x, y },
+      screen: { width: screenWidth, height: screenHeight }
+    });
   }
 
   return { x, y };

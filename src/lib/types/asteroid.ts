@@ -57,9 +57,9 @@ export function getScoreForAsteroid(size: AsteroidSize): number {
   }
 }
 
-export function generateRandomAsteroidVelocity(baseSpeed: number = 1): Velocity {
+export function generateRandomAsteroidVelocity(baseSpeed: number = 0.15): Velocity {
   const angle = Math.random() * 2 * Math.PI;
-  const speed = baseSpeed * (0.5 + Math.random() * 0.5); // 50-100% of base speed
+  const speed = baseSpeed * (0.8 + Math.random() * 0.2); // 80-100% of base speed for minimal variation
 
   return {
     dx: Math.cos(angle) * speed,
@@ -85,11 +85,11 @@ export function createAsteroidFragments(parentAsteroid: Asteroid): Asteroid[] {
       y: parentAsteroid.position.y + Math.sin(offsetAngle) * offsetDistance
     };
 
-    // Base fragment velocity on parent velocity plus random component
+    // Base fragment velocity on parent velocity plus small random component
     const baseSpeed = Math.sqrt(
       parentAsteroid.velocity.dx ** 2 + parentAsteroid.velocity.dy ** 2
     );
-    const fragmentVelocity = generateRandomAsteroidVelocity(baseSpeed + 1);
+    const fragmentVelocity = generateRandomAsteroidVelocity(baseSpeed * 1.1); // Only 10% faster than parent
 
     fragments.push(createAsteroid({
       position: fragmentPosition,

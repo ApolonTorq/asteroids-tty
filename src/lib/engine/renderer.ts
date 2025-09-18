@@ -169,12 +169,15 @@ export class Renderer {
 
     // Render spaceship last (highest z-index)
     this.renderSpaceship(gameState.objects.spaceship);
+
+    // Update DOM with optimized change detection
+    this.updateDOMElement();
   }
 
-  // Get current frame for rendering
+  // Get current frame for rendering (no deep copy needed)
   getFrame(): RenderFrame {
     return {
-      cells: this.canvas.map(row => [...row]), // Deep copy
+      cells: this.canvas, // Direct reference - no copying needed
       width: this.width,
       height: this.height,
       timestamp: performance.now()
@@ -185,56 +188,52 @@ export class Renderer {
   createDOMElement(): HTMLElement {
     const container = document.createElement('div');
     container.className = 'asteroids-container';
+    container.style.cssText = `
+      font-family: 'Courier New', monospace;
+      background-color: #000;
+      color: #00FF00;
+      padding: 10px;
+      border: 2px solid #00FF00;
+      display: inline-block;
+    `;
 
-    this.applyContainerStyles(container);
+    // Create simple pre element instead of 2000 DOM nodes
+    const gameScreen = document.createElement('pre');
+    gameScreen.className = 'game-screen';
+    gameScreen.style.cssText = `
+      margin: 0;
+      padding: 0;
+      font-size: 14px;
+      line-height: 1;
+      white-space: pre;
+      background-color: #000;
+      color: #00FF00;
+    `;
+
+    container.appendChild(gameScreen);
     this.container = container;
-
-    // Create character grid
-    const grid = document.createElement('div');
-    grid.className = 'character-grid';
-    this.applyGridStyles(grid);
-
-    // Create rows and cells
-    for (let y = 0; y < this.height; y++) {
-      const row = document.createElement('div');
-      row.className = 'character-row';
-      this.applyRowStyles(row);
-
-      for (let x = 0; x < this.width; x++) {
-        const cell = document.createElement('span');
-        cell.className = 'character-cell';
-        cell.textContent = ' ';
-        this.applyCellStyles(cell);
-        row.appendChild(cell);
-      }
-
-      grid.appendChild(row);
-    }
-
-    container.appendChild(grid);
     return container;
   }
 
   updateDOMElement(): void {
     if (!this.container) return;
 
-    const grid = this.container.querySelector('.character-grid');
-    if (!grid) return;
+    const gameScreen = this.container.querySelector('.game-screen') as HTMLElement;
+    if (!gameScreen) return;
 
-    const rows = grid.querySelectorAll('.character-row');
-
-    for (let y = 0; y < this.height && y < rows.length; y++) {
-      const cells = rows[y].querySelectorAll('.character-cell');
-
-      for (let x = 0; x < this.width && x < cells.length; x++) {
-        const cell = cells[x] as HTMLElement;
-        const renderCell = this.canvas[y][x];
-
-        cell.textContent = renderCell.character;
-        cell.style.color = renderCell.color || this.displayConfig.colors.foreground;
-        cell.style.backgroundColor = renderCell.backgroundColor || this.displayConfig.colors.background;
+    // Convert canvas to simple text string - MUCH faster
+    let screenText = '';
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        screenText += this.canvas[y][x].character;
+      }
+      if (y < this.height - 1) {
+        screenText += '\n';
       }
     }
+
+    // Single DOM update instead of thousands
+    gameScreen.textContent = screenText;
   }
 
   // Style application methods
